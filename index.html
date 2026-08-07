@@ -147,6 +147,9 @@
   .revision-change.down{background:#fdebed;color:#a52232;}
   .revision-change.flat{background:#eef2f5;color:#52697a;}
   .revision-change.new{background:#fff4d6;color:#8a6200;}
+  .hfc-bar-badge{display:inline-flex;align-items:center;justify-content:center;min-width:54px;padding:3px 8px;border-radius:999px;font-size:11px;font-weight:900;white-space:nowrap;background:#e8f1f8;color:#0b4f7a;border:1px solid #b8d1e3;}
+  .hfc-bar-badge.bar5{background:#fff4cf;color:#7b5900;border-color:#e7c650;}
+  .hfc-bar-none{color:#7b8b98;font-weight:800;}
 
   .barLevels{border-top:1px solid var(--rail);margin-top:6px;padding-bottom:10px;}
   .bl-grid{display:flex;gap:14px;}
@@ -433,12 +436,12 @@
     <h2>Final Results</h2>
     <div class="podium" id="podium"></div>
     <table>
-      <thead><tr><th>Pos</th><th>Driver</th><th>GERS</th><th>Store</th><th style="text-align:center">Position Change</th><th style="text-align:right">Bedding Change</th><th style="text-align:right">Bedding Sales</th><th style="text-align:right">Award</th></tr></thead>
+      <thead><tr><th>Pos</th><th>Driver</th><th>GERS</th><th>Store</th><th style="text-align:center">Position Change</th><th style="text-align:right">Bedding Change</th><th style="text-align:right">Bedding Sales</th><th style="text-align:center">HFC Bar</th><th style="text-align:right">Award</th></tr></thead>
       <tbody id="resultsBody"></tbody>
     </table>
   </div>
 
-  <footer>Track live standings in NetSuite → Raytona dashboard, or on your showroom tracking chart. <span class="build-stamp" id="buildStamp"> Week 4 • Aug 7, 2026 • Build 2.4.0</span></footer>
+  <footer>Track live standings in NetSuite → Raytona dashboard, or on your showroom tracking chart. <span class="build-stamp" id="buildStamp"> Week 4 • Aug 7, 2026 • Build 2.6.0</span></footer>
 </div>
 
 <script>
@@ -521,64 +524,64 @@ const DAILY_UPDATE = {
   },
   "revisionChanges": {
     "CP18": {
-      "position": null,
-      "sales": null,
-      "status": "baseline"
+      "position": 0,
+      "sales": 0,
+      "status": "existing"
     },
     "TPF": {
-      "position": null,
-      "sales": null,
-      "status": "baseline"
+      "position": 0,
+      "sales": 0,
+      "status": "existing"
     },
     "MP14": {
-      "position": null,
-      "sales": null,
-      "status": "baseline"
+      "position": 0,
+      "sales": 0,
+      "status": "existing"
     },
     "LMJ3": {
-      "position": null,
-      "sales": null,
-      "status": "baseline"
+      "position": 0,
+      "sales": 0,
+      "status": "existing"
     },
     "AMR5": {
-      "position": null,
-      "sales": null,
-      "status": "baseline"
+      "position": 0,
+      "sales": 0,
+      "status": "existing"
     },
     "RFK": {
-      "position": null,
-      "sales": null,
-      "status": "baseline"
+      "position": 0,
+      "sales": 0,
+      "status": "existing"
     },
     "KT13": {
-      "position": null,
-      "sales": null,
-      "status": "baseline"
+      "position": 0,
+      "sales": 0,
+      "status": "existing"
     },
     "DD19": {
-      "position": null,
-      "sales": null,
-      "status": "baseline"
+      "position": 0,
+      "sales": 0,
+      "status": "existing"
     },
     "DD22": {
-      "position": null,
-      "sales": null,
-      "status": "baseline"
+      "position": 0,
+      "sales": 0,
+      "status": "existing"
     },
     "SM2A": {
-      "position": null,
-      "sales": null,
-      "status": "baseline"
+      "position": 0,
+      "sales": 0,
+      "status": "existing"
     },
     "MRM7": {
-      "position": null,
-      "sales": null,
-      "status": "baseline"
+      "position": 0,
+      "sales": 0,
+      "status": "existing"
     }
   }
 };
 const WEEK_NUMBER = DAILY_UPDATE.weekNumber;
-const RAYTONA_BUILD = DAILY_UPDATE.build || '2.4.0';
+const RAYTONA_BUILD = DAILY_UPDATE.build || '2.6.0';
 const LAST_UPDATED = DAILY_UPDATE.lastUpdated;
 const STORE_PERFORMANCE = {
   store: 'Patchogue',
@@ -597,6 +600,21 @@ function storeScalePosition(percent){
 }
 const getStoreMeterPosition = () => storeScalePosition(STORE_PERFORMANCE.percent);
 const money = value => '$'+value.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+const HFC_BAR_THRESHOLDS = [
+  {level:5,min:145000},
+  {level:4,min:120000},
+  {level:3,min:90000},
+  {level:2,min:73000},
+  {level:1,min:42000},
+];
+function hfcBarLevel(value){
+  const hit=HFC_BAR_THRESHOLDS.find(bar=>Number(value)>=bar.min);
+  return hit?hit.level:0;
+}
+function hfcBarMarkup(value){
+  const level=hfcBarLevel(value);
+  return level?`<span class="hfc-bar-badge bar${level}">BAR ${level}</span>`:'<span class="hfc-bar-none">—</span>';
+}
 function revisionChangeFor(code){
   return (DAILY_UPDATE.revisionChanges&&DAILY_UPDATE.revisionChanges[code])||{position:null,sales:null,status:'baseline'};
 }
@@ -1558,6 +1576,7 @@ function showResults(){
       <td style="text-align:center">${positionChangeMarkup(change)}</td>
       <td style="text-align:right">${salesChangeMarkup(change)}</td>
       <td class="val">$${d.bedding.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+      <td style="text-align:center">${hfcBarMarkup(d.bedding)}</td>
       <td class="sweep">${d.award}</td></tr>`;
   }).join('');
   resultsEl.classList.add('show');
@@ -1617,4 +1636,5 @@ Promise.all([...carImageReady,trackBoardReady]).then(()=>{
 });
 </script>
 
+<script id="raytonaPublishedHistory" type="application/json">[{"weekNumber":4,"lastUpdated":"Aug 7, 2026","store":{"name":"Patchogue","code":"I9","actual":248226.83,"goal":760707.67},"metrics":{"CP18":{"name":"Charles Puma","metric":40454.73,"award":"1 Entry Earned"},"TPF":{"name":"Tamara Passeggio","metric":41394.56,"award":""},"MP14":{"name":"Mary Paolo","metric":43597.41,"award":"1 Entry Earned"},"LMJ3":{"name":"Lila Johnson","metric":22526.61,"award":"1 Entry Earned"},"AMR5":{"name":"Alan Rosenfield","metric":23968.08,"award":"$5,498.50"},"RFK":{"name":"Raymond Kahn","metric":25448.96,"award":""},"KT13":{"name":"Kathryn Touhey","metric":21524.55,"award":"$3,199.00"},"DD19":{"name":"Darrue Dent","metric":25897.22,"award":"$2,199.50"},"DD22":{"name":"Diane Douglas","metric":6222.95,"award":""},"SM2A":{"name":"Steffanie Markinson","metric":5344,"award":""},"MRM7":{"name":"Madeline Morales","metric":1135.34,"award":""}},"publishedAt":null,"build":null},{"weekNumber":4,"lastUpdated":"Aug 7, 2026","store":{"name":"Patchogue","code":"I9","actual":248226.83,"goal":760707.67},"metrics":{"CP18":{"name":"Charles Puma","metric":40454.73,"award":"1 Entry Earned"},"TPF":{"name":"Tamara Passeggio","metric":41394.56,"award":""},"MP14":{"name":"Mary Paolo","metric":43597.41,"award":"1 Entry Earned"},"LMJ3":{"name":"Lila Johnson","metric":22526.61,"award":"1 Entry Earned"},"AMR5":{"name":"Alan Rosenfield","metric":23968.08,"award":"$5,498.50"},"RFK":{"name":"Raymond Kahn","metric":25448.96,"award":""},"KT13":{"name":"Kathryn Touhey","metric":21524.55,"award":"$3,199.00"},"DD19":{"name":"Darrue Dent","metric":25897.22,"award":"$2,199.50"},"DD22":{"name":"Diane Douglas","metric":6222.95,"award":""},"SM2A":{"name":"Steffanie Markinson","metric":5344,"award":""},"MRM7":{"name":"Madeline Morales","metric":1135.34,"award":""}},"publishedAt":"2026-08-07T19:02:18.531Z","build":"2.6.0"}]</script>
 </body></html>
